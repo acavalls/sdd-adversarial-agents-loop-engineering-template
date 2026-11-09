@@ -1,0 +1,80 @@
+schema: spec-driven
+
+# Injected into EVERY artifact generation. Deliberately concise.
+# Replace every placeholder with your project's fixed decisions.
+context: |
+  <project_name>: <one-paragraph description of the project and its goal>.
+
+  Fixed stack (not renegotiated in proposals):
+  - Backend: <language, framework, storage>.
+  - API auth: <mechanism>. Web auth: <mechanism>.
+  - Frontend: <approach; state explicitly if there is no build step/SPA>.
+  - Architecture (fixed; not renegotiated in designs): <layering, app
+    organization, where API and UI live>.
+  - Media/assets: <how files, images and fixtures are handled>.
+  - Tests: <runner and plugin>; every scenario in the specs must have a
+    test traceable by the scenario name. Coverage must stay >= <threshold%>.
+  - Quality gates: <linter (lint + format)> and <type checker> must pass.
+  - Development data: <how dev data/bootstrap works, if any>.
+
+  Non-negotiable principles:
+  1. The spec is the source of truth: every observable behavior change
+     must land as an OpenSpec change (proposal + deltas) or be
+     regularized as such. Behavior not described in openspec/specs/ is a
+     defect, even if the code works.
+  2. Simplicity above all: when two solutions exist, always pick the
+     simpler one.
+  3. Layer discipline: business logic lives in the layers your
+     architecture declares for it; edge layers (views, controllers,
+     serializers, templates) never contain business rules.
+
+# Per-artifact rules: only injected when generating that artifact.
+# The rules below are methodology defaults; add project-specific ones.
+rules:
+  specs:
+    - Write in English keeping the normative keyword of every requirement
+      (MUST/SHALL), e.g. "The system MUST list posts from followed users"
+    - Reuse terms already defined in the living specs; do not introduce
+      new synonyms for existing concepts
+  proposal:
+    - Record every business decision in proposal.md with its date
+  design:
+    - No new dependency without a written justification
+    - "State the validation boundaries per layer: request format at the
+      edge, application rules in use cases, business invariants in models,
+      technical constraints in the database"
+    - "<State how your stack expresses domain rules idiomatically, so
+      designs never introduce artificial abstraction layers>"
+  tasks:
+    - Group tasks by capability; each task must map to a spec requirement
+      or scenario
+    - "Order work inside-out WITHIN each task (domain model -> service ->
+      use case -> adapter), never across groups: adapters (API, web) are
+      not deferred to trailing groups. Each group must be independently
+      verifiable (its tests run within the group)"
+    - "Validation-closed groups: when a group ends, every capability it
+      introduces must be exercisable end-to-end through the primary
+      interface its delta spec declares (an app route reachable from the
+      running system, or an endpoint visible in its API surface) — not
+      only through tests"
+    - "No deferred wiring: routes, templates, navigation entries and API
+      surface registration are grouped with the feature that introduces
+      them, never postponed to a later change. If the shell such wiring
+      lives in does not exist yet, creating a minimal exercisable shell
+      skeleton is a task of the first feature change"
+    - "Minimal wiring rule: when a capability depends on something not yet
+      implemented, the plan must include the minimal wiring (placeholder
+      navigation entry, stub endpoint, mock) within the same change so
+      the capability stays exercisable. Placeholders MUST be declared as
+      scenarios in the delta spec (e.g. 'Placeholder entries have no
+      destination'); replacing a placeholder later is an observable
+      change that requires its own delta"
+
+operations:
+  apply:
+    guidance:
+      - Run the project test runner and linter after each task; report
+        results concisely
+  archive:
+    guidance:
+      - Summarize which scenarios are now covered by tests before closing
